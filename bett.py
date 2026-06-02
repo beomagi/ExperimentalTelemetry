@@ -487,7 +487,9 @@ if __name__ == "__main__":
     max_observed_speed = 100.0
 
     canvas = TerminalCanvas(CANVAS_WIDTH, CANVAS_HEIGHT)
-    os.system('clear')
+    
+    os.system('cls' if os.name == 'nt' else 'clear')
+
     print("\033[?25l")  # Hide terminal cursor
 
     try:
