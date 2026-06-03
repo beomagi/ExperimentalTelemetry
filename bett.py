@@ -65,11 +65,11 @@ CAR_ASCII=f"""
 
        1▒▒▒▒▒▒▒▒▒▒▒▒5            2▒▒▒▒▒▒▒▒▒▒▒▒5
   ▄█▀▀█1▒▒▒▒▒▒▒▒▒▒▒▒5█▀▀▀▀▀▀▀▀▀▀█2▒▒▒▒▒▒▒▒▒▒▒▒5█▀▀▀▀█▄▄
-  █   █1▒▒▒▒▒▒▒▒▒▒▒▒5█  RIGHT   █2▒▒▒▒▒▒▒▒▒▒▒▒5█  F   ▀█
+  █   █1▒▒▒▒▒▒▒▒▒▒▒▒5█  LEFT    █2▒▒▒▒▒▒▒▒▒▒▒▒5█  F   ▀█
   █   ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀          ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀  R    █
   █                                               O    █
   █   █▀▀▀▀▀▀▀▀▀▀▀▀▀▀█          █▀▀▀▀▀▀▀▀▀▀▀▀▀▀█  N    █
-  █   █3▒▒▒▒▒▒▒▒▒▒▒▒5█  LEFT    █4▒▒▒▒▒▒▒▒▒▒▒▒5█  T   ▄█
+  █   █3▒▒▒▒▒▒▒▒▒▒▒▒5█  RIGHT   █4▒▒▒▒▒▒▒▒▒▒▒▒5█  T   ▄█
   ▀█▄▄█3▒▒▒▒▒▒▒▒▒▒▒▒5█▄▄▄▄▄▄▄▄▄▄█4▒▒▒▒▒▒▒▒▒▒▒▒5█▄▄▄▄█▀▀
        3▒▒▒▒▒▒▒▒▒▒▒▒5            4▒▒▒▒▒▒▒▒▒▒▒▒5
 
@@ -230,10 +230,10 @@ def draw_car_silhouette(canvas, tele, x=42, y=2):
     carcolor=COLWHT
     replacement = {
     "5": f"{carcolor} ",
-    "1": f"{TireColRR} ",
-    "2": f"{TireColRL} ",
-    "3": f"{TireColFR} ",
-    "4": f"{TireColFL} ",
+    "1": f"{TireColRL} ",
+    "2": f"{TireColFL} ",
+    "3": f"{TireColRR} ",
+    "4": f"{TireColFR} ",
     }
     CAR_ASCIId = "".join(replacement.get(ch, ch) for ch in CAR_ASCII)
     canvas.blit(CAR_ASCIId, x, y, carcolor, check_bounds=False)
