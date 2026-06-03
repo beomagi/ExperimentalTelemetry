@@ -63,21 +63,15 @@ ANSI_ESCAPE_RE = re.compile(r'\033\[[0-9;]*[a-zA-Z]')
 
 CAR_ASCII=f"""
 
-       1▒▒▒▒▒▒▒▒▒▒▒▒5            2▒▒▒▒▒▒▒▒▒▒▒▒5
-  ▄█▀▀█1▒▒▒▒▒▒▒▒▒▒▒▒5█▀▀▀▀▀▀▀▀▀▀█2▒▒▒▒▒▒▒▒▒▒▒▒5█▀▀▀▀█▄▄
-  █   █1▒▒▒▒▒▒▒▒▒▒▒▒5█  RIGHT   █2▒▒▒▒▒▒▒▒▒▒▒▒5█  F   ▀█
-  █   ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀          ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀  R    █
-  █                                               O    █
-  █   █▀▀▀▀▀▀▀▀▀▀▀▀▀▀█          █▀▀▀▀▀▀▀▀▀▀▀▀▀▀█  N    █
-  █   █3▒▒▒▒▒▒▒▒▒▒▒▒5█  LEFT    █4▒▒▒▒▒▒▒▒▒▒▒▒5█  T   ▄█
-  ▀█▄▄█3▒▒▒▒▒▒▒▒▒▒▒▒5█▄▄▄▄▄▄▄▄▄▄█4▒▒▒▒▒▒▒▒▒▒▒▒5█▄▄▄▄█▀▀
-       3▒▒▒▒▒▒▒▒▒▒▒▒5            4▒▒▒▒▒▒▒▒▒▒▒▒5
+             ▄███████▄                           ▄██████████▄
+             █#W#████████#R#█                         █#W#████████████#R#█  
+        ▄██████████████████▄▄                  ████████████████
+        ███#Tb#▒▒▒#R#██████████#Tf#▒▒▒#R#███▄                ████████████████
+        ▀█#Tb#▒▒▒▒▒#R#████████#Tf#▒▒▒▒▒#R#███                ▀#Tl#▒▒▒#R#▀▀▀▀▀▀▀▀#Tr#▒▒▒#R#▀
+           #Tb#▒▒▒#R#          #Tf#▒▒▒#R#                     #Tl#▒▒▒#R#        #Tr#▒▒▒#R#
 
 """
 
-EXPOAVG={} #global set of exponential moving averages
-EXP_ALPHA_SLIP=0.35 #smoothing factor for exponential moving averages
-EXP_ALPHA_TEMP=0.2
 
 # --- DOUBLE BUFFER CANVAS ENGINE ---
 class TerminalCanvas:
@@ -113,7 +107,7 @@ class TerminalCanvas:
             if idx < len(codes):
                 current_color = codes[idx]
 
-    def blit(self, source_text, start_x, start_y, default_color=COLRST,check_bounds=True):
+    def blit(self, source_text, start_x, start_y, default_color=COLRST):
         """Blits multi-line newline-separated ASCII blocks onto the canvas,
         safely handling embedded ANSI color codes without breaking layout alignment."""
         lines = source_text.strip("\n").split("\n")
@@ -130,7 +124,7 @@ class TerminalCanvas:
             for idx, token in enumerate(tokens):
                 # Process literal visible characters
                 for char in token:
-                    if (0 <= current_x < self.width and 0 <= ty < self.height) or not check_bounds:
+                    if 0 <= current_x < self.width and 0 <= ty < self.height:
                         self.grid[ty][current_x] = char
                         self.colors[ty][current_x] = current_color
                     current_x += 1 # Only advance horizontal position for actual visible characters
@@ -220,23 +214,17 @@ def draw_input_bars(canvas, tele, x=0, y=7):
 
 def draw_car_silhouette(canvas, tele, x=42, y=2):
     #combines tires for front/rear, left/right for the diagram
+    tireback=max(tele['SlipCombiPcrRL'],tele['SlipCombiPcrRR'])
+    tirefrnt=max(tele['SlipCombiPcrFL'],tele['SlipCombiPcrFR'])
+    tireleft=max(tele['SlipCombiPcrFL'],tele['SlipCombiPcrRL'])
+    tirerigt=max(tele['SlipCombiPcrFR'],tele['SlipCombiPcrRR'])
+    TireColTB=colorbyrange(COLBGR,COLBYL,COLBRD,SLIPCOMBITHRESHOLD_LOW,SLIPCOMBITHRESHOLD_HIGH,tireback)
+    TireColTF=colorbyrange(COLBGR,COLBYL,COLBRD,SLIPCOMBITHRESHOLD_LOW,SLIPCOMBITHRESHOLD_HIGH,tirefrnt)
+    TireColTL=colorbyrange(COLBGR,COLBYL,COLBRD,SLIPCOMBITHRESHOLD_LOW,SLIPCOMBITHRESHOLD_HIGH,tireleft)
+    TireColTR=colorbyrange(COLBGR,COLBYL,COLBRD,SLIPCOMBITHRESHOLD_LOW,SLIPCOMBITHRESHOLD_HIGH,tirerigt)
 
-    TireColRR=colorbyrange(COLBGR,COLBYL,COLBRD,SLIPCOMBITHRESHOLD_LOW,SLIPCOMBITHRESHOLD_HIGH,tele['SlipCombiPcrRR'])
-    TireColRL=colorbyrange(COLBGR,COLBYL,COLBRD,SLIPCOMBITHRESHOLD_LOW,SLIPCOMBITHRESHOLD_HIGH,tele['SlipCombiPcrRL'])
-    TireColFR=colorbyrange(COLBGR,COLBYL,COLBRD,SLIPCOMBITHRESHOLD_LOW,SLIPCOMBITHRESHOLD_HIGH,tele['SlipCombiPcrFR'])
-    TireColFL=colorbyrange(COLBGR,COLBYL,COLBRD,SLIPCOMBITHRESHOLD_LOW,SLIPCOMBITHRESHOLD_HIGH,tele['SlipCombiPcrFL'])
-    # tire markers
-    # 1=RR, 2=RL, 3=FR, 4=FL, 5 is reset color for body
-    carcolor=COLWHT
-    replacement = {
-    "5": f"{carcolor} ",
-    "1": f"{TireColRR} ",
-    "2": f"{TireColRL} ",
-    "3": f"{TireColFR} ",
-    "4": f"{TireColFL} ",
-    }
-    CAR_ASCIId = "".join(replacement.get(ch, ch) for ch in CAR_ASCII)
-    canvas.blit(CAR_ASCIId, x, y, carcolor, check_bounds=False)
+    CAR_ASCIId=CAR_ASCII.replace("#W#", f"{COLBBL}").replace("#R#", f"{COLRST}").replace("#Tb#", TireColTB).replace("#Tf#", TireColTF).replace("#Tl#", TireColTL).replace("#Tr#", TireColTR)
+    canvas.blit(CAR_ASCIId, x, y, COLWHT)
 
 
 def colorbyrange(col1,col2,col3,threshold1, threshold2, value):
@@ -258,7 +246,11 @@ def draw_tire_slip_info(canvas, tele, x=42, y=15):
     canvas.draw_string(x + 5, y + 5, f"{tele['SlipAnglePcrFR']}%", colorbyrange(COLBGR,COLBYL,COLBRD,SLIPANGLETHRESHOLD_LOW,SLIPANGLETHRESHOLD_HIGH,tele['SlipAnglePcrFR']))
     canvas.draw_string(x + 18, y + 4, f"{tele['SlipAnglePcrRL']}%", colorbyrange(COLBGR,COLBYL,COLBRD,SLIPANGLETHRESHOLD_LOW,SLIPANGLETHRESHOLD_HIGH,tele['SlipAnglePcrRL']))
     canvas.draw_string(x + 18, y + 5, f"{tele['SlipAnglePcrRR']}%", colorbyrange(COLBGR,COLBYL,COLBRD,SLIPANGLETHRESHOLD_LOW,SLIPANGLETHRESHOLD_HIGH,tele['SlipAnglePcrRR']))
-
+    canvas.draw_string(x, y+6, " [ TIRE COMBINED SLIP RATIO ]", COLWHT)
+    canvas.draw_string(x + 5, y + 7, f"{tele['SlipCombiPcrFL']}%", colorbyrange(COLBGR,COLBYL,COLBRD,SLIPCOMBITHRESHOLD_LOW,SLIPCOMBITHRESHOLD_HIGH,tele['SlipCombiPcrFL']))
+    canvas.draw_string(x + 5, y + 8, f"{tele['SlipCombiPcrFR']}%", colorbyrange(COLBGR,COLBYL,COLBRD,SLIPCOMBITHRESHOLD_LOW,SLIPCOMBITHRESHOLD_HIGH,tele['SlipCombiPcrFR']))
+    canvas.draw_string(x + 18, y + 7, f"{tele['SlipCombiPcrRL']}%", colorbyrange(COLBGR,COLBYL,COLBRD,SLIPCOMBITHRESHOLD_LOW,SLIPCOMBITHRESHOLD_HIGH,tele['SlipCombiPcrRL']))
+    canvas.draw_string(x + 18, y + 8, f"{tele['SlipCombiPcrRR']}%", colorbyrange(COLBGR,COLBYL,COLBRD,SLIPCOMBITHRESHOLD_LOW,SLIPCOMBITHRESHOLD_HIGH,tele['SlipCombiPcrRR']))
 
 
 def draw_alignment_analyzer(canvas, tele, x=80, y=3):
@@ -423,7 +415,7 @@ def draw_speed_history_graph(canvas, speed_history, max_observed_speed, x=0, y=1
             if (glbcntr + graph_x) % 10 == 0:  # Add a vertical grid line every 10 columns
                 grphcolor = COLBRD
             if val > row_top:
-                canvas.draw_string(graph_x, graph_y+1, "░", grphcolor)
+                canvas.draw_string(graph_x, graph_y+1, "▒", grphcolor)
             elif val >= row_bottom:
                 if val >= row_half:
                     canvas.draw_string(graph_x, graph_y+1, "█", grphcolor)
@@ -458,11 +450,12 @@ def draw_terminal(canvas, tele, speed_history, max_observed_speed):
     draw_input_bars(canvas, tele, 2, 7)
     
     # 4. Car Silhouette Blit
-    draw_car_silhouette(canvas, tele, 45, 2)
+    draw_car_silhouette(canvas, tele, 42, 2)
     
     # 5. Orientation Info Block
     draw_orientation_block(canvas, tele, 2, 10)
 
+    
     # 6. Orientation Vector Mini-Widget
     draw_orientation_vector(canvas, tele, 28, 13)
         
@@ -470,13 +463,13 @@ def draw_terminal(canvas, tele, speed_history, max_observed_speed):
     draw_speed_history_graph(canvas, speed_history, max_observed_speed, 2, 18)
 
     # 8. Tire Slip Info (Optional)
-    draw_tire_slip_info(canvas, tele, 48, 12)
+    draw_tire_slip_info(canvas, tele, 48, 9)
 
     # 9. Experimental Dynamic Camber & Alignment Analyzer (Optional)
-    draw_alignment_analyzer(canvas, tele, 80, 12)
+    draw_alignment_analyzer(canvas, tele, 80, 9)
 
     #10. Garage Setup Suggestions Based on Thermal Analysis (Optional)
-    draw_camber_tuner_suggestions(canvas, tele, 80, 26)
+    draw_camber_tuner_suggestions(canvas, tele, 80, 23)
 
     # Render frame buffer directly to stdout
     print(canvas.render(), end="")
@@ -513,18 +506,32 @@ if __name__ == "__main__":
             if speed_mph > max_observed_speed:
                 max_observed_speed = speed_mph
 
-            #lets get exponential moving averages of the slip and temp values for smooth data display.
+            SlipRatioPcrFL=abs(int(tele['TireSlipRatioFL']*100))
+            SlipRatioPcrFR=abs(int(tele['TireSlipRatioFR']*100))
+            SlipRatioPcrRL=abs(int(tele['TireSlipRatioRL']*100))
+            SlipRatioPcrRR=abs(int(tele['TireSlipRatioRR']*100))
+            SlipAnglePcrFL=abs(int(tele['TireSlipAngleFL']*100))
+            SlipAnglePcrFR=abs(int(tele['TireSlipAngleFR']*100))
+            SlipAnglePcrRL=abs(int(tele['TireSlipAngleRL']*100))
+            SlipAnglePcrRR=abs(int(tele['TireSlipAngleRR']*100))
+            SlipCombiPcrFL=abs(int(tele['TireCombinedSlipFL']*100))
+            SlipCombiPcrFR=abs(int(tele['TireCombinedSlipFR']*100))
+            SlipCombiPcrRL=abs(int(tele['TireCombinedSlipRL']*100))
+            SlipCombiPcrRR=abs(int(tele['TireCombinedSlipRR']*100))
+            tele['SlipRatioPcrFL']=SlipRatioPcrFL
+            tele['SlipRatioPcrFR']=SlipRatioPcrFR
+            tele['SlipRatioPcrRL']=SlipRatioPcrRL
+            tele['SlipRatioPcrRR']=SlipRatioPcrRR
+            tele['SlipAnglePcrFL']=SlipAnglePcrFL
+            tele['SlipAnglePcrFR']=SlipAnglePcrFR
+            tele['SlipAnglePcrRL']=SlipAnglePcrRL
+            tele['SlipAnglePcrRR']=SlipAnglePcrRR
+            tele['SlipCombiPcrFL']=SlipCombiPcrFL
+            tele['SlipCombiPcrFR']=SlipCombiPcrFR
+            tele['SlipCombiPcrRL']=SlipCombiPcrRL
+            tele['SlipCombiPcrRR']=SlipCombiPcrRR
 
-            for tires in ['FL', 'FR', 'RL', 'RR']:
-                EXPOAVG[f'TireSlipRatio{tires}'] = EXPOAVG.get(f'TireSlipRatio{tires}', tele[f'TireSlipRatio{tires}']) * (1 - EXP_ALPHA_SLIP) + tele[f'TireSlipRatio{tires}'] * EXP_ALPHA_SLIP
-                EXPOAVG[f'TireSlipAngle{tires}'] = EXPOAVG.get(f'TireSlipAngle{tires}', tele[f'TireSlipAngle{tires}']) * (1 - EXP_ALPHA_SLIP) + tele[f'TireSlipAngle{tires}'] * EXP_ALPHA_SLIP
-                EXPOAVG[f'TireCombinedSlip{tires}'] = EXPOAVG.get(f'TireCombinedSlip{tires}', tele[f'TireCombinedSlip{tires}']) * (1 - EXP_ALPHA_SLIP) + tele[f'TireCombinedSlip{tires}'] * EXP_ALPHA_SLIP
-                EXPOAVG[f'TireTemp{tires}'] = EXPOAVG.get(f'TireTemp{tires}', tele[f'TireTemp{tires}']) * (1 - EXP_ALPHA_TEMP) + tele[f'TireTemp{tires}'] * EXP_ALPHA_TEMP
-                tele[f'SlipRatioPcr{tires}'] = abs(int(EXPOAVG[f'TireSlipRatio{tires}']*100))
-                tele[f'SlipAnglePcr{tires}'] = abs(int(EXPOAVG[f'TireSlipAngle{tires}']*100))
-                tele[f'SlipCombiPcr{tires}'] = abs(int(EXPOAVG[f'TireCombinedSlip{tires}']*100))
-                tele[f'TireTemp{tires}'] = abs(int(EXPOAVG[f'TireTemp{tires}']*100))
-
+        
             # Draw everything through our decoupled graphics state machine
             draw_terminal(canvas, tele, speed_history, max_observed_speed)
 
