@@ -1,3 +1,5 @@
+<img width="900" height="557" alt="BETTv1 1" src="https://github.com/user-attachments/assets/86d853a9-f1ad-435d-bfaa-3fa4680f476c" />
+
 # Beomagi's Experimental Telemetry Tool
 
 A real-time telemetry dashboard for **Forza Horizon 6** data streaming (should also work with FH5).
